@@ -45,7 +45,7 @@ app.get('/:id', async (req, res) => {
     res.send()
     return
   }
-  res.status(400).send({ error: 'Could not find ID' })
+  res.redirect('/')
 })
 
 app.post('/lookup', async (req, res) => {
