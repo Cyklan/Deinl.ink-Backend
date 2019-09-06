@@ -25,9 +25,10 @@ app.post('/shorten', async (req, res) => {
       .status(400)
       .json({ error: 'Malformed URL' })
       .send()
+    return
   }
-
-  const dbId = await saveUrlToDatabase(req.body.url)
+  let dbId = await checkIfInDatabase(req.body.url)
+  if (dbId === null) dbId = await saveUrlToDatabase(req.body.url)
   const encoded = encodeId(dbId)
 
   res.status(200).json({ encoded })
@@ -83,6 +84,20 @@ const decodeId = id => {
   const hashIds = new Hashids(process.env.SALT, 10)
   const decoded = hashIds.decode(id)
   return decoded[0]
+}
+
+const checkIfInDatabase = url => {
+  return new Promise((resolve, reject) => {
+    pool.query(
+      'SELECT id FROM url WHERE longurl = ?',
+      url,
+      (error, results) => {
+        if (error) reject(error)
+        if (results.length >= 1) resolve(results[0].id)
+        else resolve(null)
+      }
+    )
+  })
 }
 
 const saveUrlToDatabase = url => {
